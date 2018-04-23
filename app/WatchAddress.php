@@ -32,7 +32,12 @@ class WatchAddress
         'bip44_path',
         'public_key',
         'address',
-        'created_at',
-        'updated_at',
     ];
+
+    /**
+     * The table name
+     * 
+     * @var string
+     */
+    protected $table = "nem_watch_addresses";
 }

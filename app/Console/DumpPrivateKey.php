@@ -19,7 +19,6 @@
 namespace App\Console;
 
 use Illuminate\Console\Command;
-use App\Blockchain\ConnectionPool;
 
 // BIP32/BIP39 dependencies
 use BitWasp\Bitcoin\Mnemonic\Bip39\Bip39SeedGenerator;
@@ -31,12 +30,7 @@ use BitWasp\Buffertools\Buffer;
 use NEM\Core\KeyPair;
 use App\WatchAddress;
 
-use DB;
-use Exception;
-use RuntimeException;
-use InvalidArgumentException;
-
-class GenerateNewAddress 
+class DumpPrivateKey 
     extends Command
 {
     /**
@@ -44,16 +38,15 @@ class GenerateNewAddress
      *
      * @var string
      */
-    protected $signature = 'wallet:address:new
-                       {--N|network=mainnet : Define a NEM Network name (or ID). Defaults to Mainnet.}
-                       {--P|path= : Define a BIP44 derivation path for the private key generation.}';
+    protected $signature = 'wallet:dumpprivkey
+                       {--P|path= : Define a BIP44 derivation path for the private key derivation.}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'This will generate a new NEM address.';
+    protected $description = 'This will display the private key at the said derivation path.';
 
     /**
      * List of arguments passed to this command instance.
@@ -77,14 +70,10 @@ class GenerateNewAddress
      */
     public function setUp()
     {
-        $our_opts = ["network" => null, "path" => null];
+        $our_opts = ["path" => null];
 
         // parse command line arguments.
         $options  = array_intersect_key($this->option(), $our_opts);
-
-        if (!in_array(strtolower($options["network"]), ["mainnet", "testnet", "mijin"])) {
-            $options["network"] = "mainnet";
-        }
 
         $this->bip44_path = env("NEM_BIP44_PATH");
         if (!empty($options["path"])) {
@@ -105,13 +94,8 @@ class GenerateNewAddress
     {
         $this->setUp();
 
-        $network = env("NEM_NETWORK_ID");
         $keypair = $this->createKeyPair();
-        $address = WatchAddress::create([
-            "bip44_path" => $this->bip44_path,
-            "public_key" => $keypair->getPublicKey()->getHex(),
-            "address"    => $keypair->getAddress(),
-        ]);
+        $this->info($keypair->getPrivateKey()->getHex());
 
         // Job done.
         return ;
@@ -133,7 +117,7 @@ class GenerateNewAddress
         $hdNode = $this->createHDNode();
 
         // check path existence
-        $this->bip44_path = $this->bip44NextIndex();
+        $this->bip44_path = $this->bip44_path;
 
         // get actual private key
         $bip44 = $hdNode->derivePath($this->bip44_path);
@@ -179,30 +163,5 @@ class GenerateNewAddress
               $mnemonic,
               $bip39Seed);
         return $bip32;
-    }
-
-    /**
-     * Helper method to increase the bip44 address index.
-     * 
-     * @return string
-     */
-    public function bip44NextIndex()
-    {
-        // get latest generated
-        $last = WatchAddress::whereRaw("true")->orderBy("id", "desc")->first();
-        $path = null !== $last ? $last->bip44_path : $this->bip44_path;
-        
-        // latest hardened derivation
-        $lasth = strrpos($path, "'");
-        $base = substr($path, 0, $lasth+1);
-        $index = trim(substr($path, $lasth+1), "/");
-
-        // increase address index (not location!)
-        list($location, $index) = explode("/", $index);
-        $location = (int) $location;
-        $index = (int) $index;
-        $index++;
-
-        return $base . "/" . $location . "/" . $index;
     }
 }

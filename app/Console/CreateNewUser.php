@@ -36,7 +36,7 @@ class CreateNewUser
      */
     protected $signature = 'users:new
                        {--e|email= : Define the user email.}
-                       {--n|name= : (Optional) Define a name for the user account.}
+                       {--N|name= : (Optional) Define a name for the user account.}
                        {--p|password= : (Optional) Define the password for the user account (Leave empty for random).}';
 
     /**
@@ -93,14 +93,11 @@ class CreateNewUser
             return ;
         }
 
-        $user = new User;
-        $user->fill([
+        $user = User::create([
             "name" => empty($this->arguments["name"]) ? $this->arguments["email"] : $this->arguments["name"],
             "email" => $this->arguments["email"],
             "password" => bcrypt($this->arguments["password"]),
         ]);
-
-        $address->save();
 
         // Job done.
         return ;

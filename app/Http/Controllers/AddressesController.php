@@ -19,10 +19,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\User;
-use Artisan;
+use App\WatchAddress;
 
-class UsersController extends Controller
+class AddressesController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -42,7 +41,7 @@ class UsersController extends Controller
      */
     public function showForm($mode, $params = [])
     {
-        return view("users.form", $params + compact("mode"));
+        return view("addresses.form", $params + compact("mode"));
     }
 
     /**
@@ -52,8 +51,8 @@ class UsersController extends Controller
      */
     public function index()
     {
-        $users = User::all();
-        return view('users.index', compact('users'));
+        $addresses = WatchAddress::all();
+        return view('addresses.index', compact('addresses'));
     }
 
     /**
@@ -76,74 +75,61 @@ class UsersController extends Controller
     {
         //Validate
         $request->validate([
-            'name' => 'required|min:3',
-            'email' => 'required|min:10',
-            'password' => 'required|min:8',
+            'bip44_path' => 'required',
+            'public_key' => 'required',
+            'address' => 'required',
         ]);
 
-        Artisan::call("users:new", [
-            "--email" => $request->email,
-            "--name"  => $request->name,
-            "--password" => $request->password
+        $address = WatchAddress::create([
+            'bip44_path' => $request->bip44_path, 
+            'public_key' => $request->public_key,
+            'address' => $request->address,
         ]);
-
-        return redirect('/users');
+        return redirect('/addresses');
     }
  
     /**
      * Display the specified resource.
      *
-     * @param  \App\User  $user
+     * @param  \App\WatchAddress  $address
      * @return \Illuminate\Http\Response
      */
-    public function show(User $user)
+    public function show(WatchAddress $address)
     {
-        return view('users.show', compact('user'));
+        return view('addresses.show', compact('address'));
     }
  
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\User  $user
+     * @param  \App\WatchAddress  $address
      * @return \Illuminate\Http\Response
      */
-    public function edit(User $user)
+    public function edit(WatchAddress $address)
     {
-        return $this->showForm("update", compact("user"));
+        return redirect("addresses");
     }
  
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\User  $user
+     * @param  \App\WatchAddress  $address
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, WatchAddress $address)
     {
-        //Validate
-        $request->validate([
-            'name' => 'required|min:3',
-            'email' => 'required|min:10',
-        ]);
-
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->save();
-        $request->session()->flash('message', 'Successfully modified the User!');
-        return redirect('users');
+        return redirect("addresses");
     }
  
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\User  $user
+     * @param  \App\WatchAddress  $address
      * @return \Illuminate\Http\Response
      */
-    public function destroy(User $user)
+    public function destroy(WatchAddress $address)
     {
-        $user->delete();
-        $request->session()->flash('message', 'Successfully deleted the User!');
-        return redirect('users');
+        return redirect("addresses");
     }
 }

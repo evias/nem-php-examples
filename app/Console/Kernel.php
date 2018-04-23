@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\GenerateNewAddress::class,
+        \App\Console\DumpPrivateKey::class,
         \App\Console\CreateNewUser::class,
         \App\Console\ProcessorDeposits::class,
     ];

@@ -18,4 +18,9 @@ Route::get('/', function () {
 // Authentication
 Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
+
+// nem-apps Resources
 Route::resource("users", "UsersController");
+Route::resource("addresses", "AddressesController");
+Route::resource("deposits", "DepositsController");
+Route::resource("withdrawals", "WithdrawalsController");
