@@ -59,7 +59,7 @@ class WithdrawalsController extends Controller
      */
     public function index()
     {
-        $withdrawals = UserWithdrawal::all();
+        $withdrawals = UserWithdrawal::paginate(20);
         return view('withdrawals.index', compact('withdrawals'));
     }
 

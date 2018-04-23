@@ -59,7 +59,7 @@ class DepositsController extends Controller
      */
     public function index()
     {
-        $deposits = UserDeposit::all();
+        $deposits = UserDeposit::paginate(20);
         return view('deposits.index', compact('deposits'));
     }
 

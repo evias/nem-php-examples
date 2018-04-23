@@ -39,3 +39,7 @@
         </tbody>
     </table>
 @endsection
+
+@section('contentFooter')
+    <div>{{ $deposits->links('vendor.pagination.bootstrap-4') }}</div>
+@endsection

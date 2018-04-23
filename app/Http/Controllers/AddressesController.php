@@ -51,7 +51,7 @@ class AddressesController extends Controller
      */
     public function index()
     {
-        $addresses = WatchAddress::all();
+        $addresses = WatchAddress::paginate(20);
         return view('addresses.index', compact('addresses'));
     }
 

@@ -53,3 +53,7 @@
         </tbody>
     </table>
 @endsection
+
+@section('contentFooter')
+    <div>{{ $users->links('vendor.pagination.bootstrap-4') }}</div>
+@endsection

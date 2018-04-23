@@ -19,6 +19,7 @@
             <th scope="col">NEM Addresses</th>
             <th scope="col">NEM Amount</th>
             <th scope="col">Broadcast #</th>
+            <th scope="col">Status</th>
             <th scope="col">Created At</th>
         </tr>
         </thead>
@@ -32,9 +33,22 @@
             </td>
             <td>{{$withdrawal->amount}} {{$withdrawal->mosaic_fqmn}}</td>
             <td>{{$withdrawal->broadcast_height ?: "N/A"}}</td>
+            <td>
+                @if ($withdrawal->broadcast_height)
+                    <div class="label label-sm label-success">
+                        <i class="fa fa-check"></i>&nbsp;Success</div>
+                @else
+                    <div class="label label-sm label-info">
+                        <i class="fa fa-clock-o"></i>&nbsp;Unconfirmed</div>
+                @endif
+            </td>
             <td>{{$withdrawal->created_at->toFormattedDateString()}}</td>
         </tr>
         @endforeach
         </tbody>
     </table>
+@endsection
+
+@section('contentFooter')
+    <div>{{ $withdrawals->links('vendor.pagination.bootstrap-4') }}</div>
 @endsection

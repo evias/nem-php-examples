@@ -45,3 +45,7 @@
         </tbody>
     </table>
 @endsection
+
+@section('contentFooter')
+    <div>{{ $mosaics->links('vendor.pagination.bootstrap-4') }}</div>
+@endsection

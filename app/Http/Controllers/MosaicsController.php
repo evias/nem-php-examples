@@ -52,7 +52,7 @@ class MosaicsController extends Controller
      */
     public function index()
     {
-        $mosaics = KnownMosaic::all();
+        $mosaics = KnownMosaic::paginate(20);
         return view('mosaics.index', compact('mosaics'));
     }
 

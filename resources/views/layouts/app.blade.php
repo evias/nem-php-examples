@@ -87,6 +87,10 @@
                         <div class="panel-body">
                             @yield('content')
                         </div>
+
+                        <div class="panel-footer">
+                            @yield('contentFooter')
+                        </div>
                     </div>
                 </div>
             </div>

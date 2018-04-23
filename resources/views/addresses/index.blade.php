@@ -35,3 +35,7 @@
         </tbody>
     </table>
 @endsection
+
+@section('contentFooter')
+    <div>{{ $addresses->links('vendor.pagination.bootstrap-4') }}</div>
+@endsection
