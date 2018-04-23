@@ -24,22 +24,85 @@ use Illuminate\Support\Facades\Schema;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Bootstrap any application services.
+     * Boot the service provider.
      *
      * @return void
      */
     public function boot()
     {
         Schema::defaultStringLength(191); 
+        $this->setupConfig();
     }
 
     /**
-     * Register any application services.
+     * Register the service provider.
      *
      * @return void
      */
     public function register()
     {
-        //
+        $this->registerConfig();
+    }
+
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return string[]
+     */
+    public function provides()
+    {
+        return [
+            "nem.network.config",
+        ];
+    }
+
+    /**
+     * Setup the NEM blockchain config.
+     *
+     * @return void
+     */
+    protected function setupConfig()
+    {
+        $source = realpath(__DIR__.'/../../config') . "/nem.php";
+        if (! $this->isLumen())
+            // console laravel, use config_path helper
+            $this->publishes([$source => config_path('nem.php')]);
+        else
+            // lumen configure app
+            $this->app->configure('nem.network.config');
+
+        $this->mergeConfigFrom($source, 'nem.network.config');
+    }
+
+    /**
+     * Register Twig config option bindings.
+     *
+     * @return void
+     */
+    protected function registerConfig()
+    {
+        $this->app->bindIf('nem.network.config', function () {
+            return $this->app['config']->get('nem.network.config');
+        }, true);
+    }
+
+    /**
+     * Check if we are running Lumen or not.
+     *
+     * @return bool
+     */
+    protected function isLumen()
+    {
+        return strpos($this->app->version(), 'Lumen') !== false;
+    }
+
+    /**
+     * Check if we are running on PHP 7.
+     *
+     * @return bool
+     */
+    protected function isRunningPhp7()
+    {
+        return version_compare(PHP_VERSION, '7.0-dev', '>=');
     }
 }

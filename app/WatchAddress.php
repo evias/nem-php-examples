@@ -16,24 +16,23 @@
  * @copyright  (c) 2017-2018, Grégory Saive <greg@evias.be>
  * @link       http://github.com/evias/nem-php-examples
  */
+namespace App;
 
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Eloquent\Model;
 
-class DatabaseSeeder extends Seeder
+class WatchAddress 
+    extends Model
 {
     /**
-     * Run the database seeds.
+     * The attributes that are mass assignable.
      *
-     * @return void
+     * @var array
      */
-    public function run()
-    {
-        DB::table('users')->insert([
-            'name' => "NEM Apps Admin",
-            'email' => env("APP_ADMIN_EMAIL", "greg@evias.be"),
-            'password' => bcrypt(env("APP_ENCRYPTION_SEED")),
-            'created_at' => DB::raw("now()"),
-            'updated_at' => DB::raw("now()"),
-        ]);
-    }
+    protected $fillable = [
+        'bip44_path',
+        'public_key',
+        'address',
+        'created_at',
+        'updated_at',
+    ];
 }

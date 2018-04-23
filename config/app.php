@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'nem-php-examples'),
+    'name' => env('APP_NAME', 'nem-apps'),
 
     /*
     |--------------------------------------------------------------------------

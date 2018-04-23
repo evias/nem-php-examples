@@ -29,7 +29,9 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Console\GenerateNewAddress::class,
+        \App\Console\CreateNewUser::class,
+        \App\Console\ProcessorDeposits::class,
     ];
 
     /**
