@@ -66,7 +66,7 @@ class CreateNemDatabaseSpace extends Migration
             $table->bigInteger('awaited_amount')->unsigned()->default(0);
             $table->bigInteger('paid_amount')->unsigned()->default(0);
             $table->bigInteger('pending_amount')->unsigned()->default(0);
-            $table->integer('creation_height')->unsigned();
+            $table->integer('creation_height')->unsigned()->nullable();
 
             // status
             $table->tinyInteger('is_paid')->unsigned()->default(0);
@@ -105,6 +105,7 @@ class CreateNemDatabaseSpace extends Migration
 
             // meta
             $table->integer("user_id")->unsigned();
+            $table->integer('nonce')->unsigned();
             $table->string("address", 40);
             $table->string("reference", 32)->nullable(); // for withdrawals message is optional
 

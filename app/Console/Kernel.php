@@ -29,9 +29,10 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Console\GenerateNewAddress::class,
         \App\Console\DumpPrivateKey::class,
+        \App\Console\CreateNewAddress::class,
         \App\Console\CreateNewUser::class,
+        \App\Console\CreateNewMosaic::class,
         \App\Console\ProcessorDeposits::class,
     ];
 

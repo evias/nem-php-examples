@@ -36,7 +36,7 @@ use Exception;
 use RuntimeException;
 use InvalidArgumentException;
 
-class GenerateNewAddress 
+class CreateNewAddress 
     extends Command
 {
     /**
@@ -44,8 +44,7 @@ class GenerateNewAddress
      *
      * @var string
      */
-    protected $signature = 'wallet:address:new
-                       {--N|network=mainnet : Define a NEM Network name (or ID). Defaults to Mainnet.}
+    protected $signature = 'addresses:new
                        {--P|path= : Define a BIP44 derivation path for the private key generation.}';
 
     /**
@@ -77,14 +76,10 @@ class GenerateNewAddress
      */
     public function setUp()
     {
-        $our_opts = ["network" => null, "path" => null];
+        $our_opts = ["path" => null];
 
         // parse command line arguments.
         $options  = array_intersect_key($this->option(), $our_opts);
-
-        if (!in_array(strtolower($options["network"]), ["mainnet", "testnet", "mijin"])) {
-            $options["network"] = "mainnet";
-        }
 
         $this->bip44_path = env("NEM_BIP44_PATH");
         if (!empty($options["path"])) {
@@ -105,12 +100,12 @@ class GenerateNewAddress
     {
         $this->setUp();
 
-        $network = env("NEM_NETWORK_ID");
+        $network = env("NEM_NETWORK", "testnet");
         $keypair = $this->createKeyPair();
         $address = WatchAddress::create([
             "bip44_path" => $this->bip44_path,
             "public_key" => $keypair->getPublicKey()->getHex(),
-            "address"    => $keypair->getAddress(),
+            "address"    => $keypair->getAddress($network),
         ]);
 
         // Job done.

@@ -21,6 +21,7 @@ Route::get('/home', 'HomeController@index')->name('home');
 
 // nem-apps Resources
 Route::resource("users", "UsersController");
+Route::resource("mosaics", "MosaicsController");
 Route::resource("addresses", "AddressesController");
 Route::resource("deposits", "DepositsController");
 Route::resource("withdrawals", "WithdrawalsController");

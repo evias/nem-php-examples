@@ -48,6 +48,7 @@
                         @guest
                             <li><a href="{{ route('login') }}">Login</a></li>
                         @else
+                            <li><a href="/mosaics" role="button"><i class="fa fa-clipboard"></i>&nbsp;Currencies</a></li>
                             <li><a href="/addresses" role="button"><i class="fa fa-bitcoin"></i>&nbsp;Addresses</a></li>
                             <li><a href="/users" role="button"><i class="fa fa-users"></i>&nbsp;Users</a></li>
                             <li><a href="/deposits" role="button"><i class="fa fa-sign-in"></i>&nbsp;Deposits</a></li>
