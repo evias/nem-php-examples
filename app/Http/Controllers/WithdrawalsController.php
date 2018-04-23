@@ -20,6 +20,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\UserWithdrawal;
+use App\KnownMosaic;
+use App\WatchAddress;
+use App\User;
 
 class WithdrawalsController extends Controller
 {
@@ -40,7 +43,13 @@ class WithdrawalsController extends Controller
      */
     public function showForm($mode, $params = [])
     {
-        return view("withdrawals.form", $params + compact("mode"));
+        $latestAppAddress = WatchAddress::whereRaw("true")->orderBy("id", "desc")->first();
+        $currentAppAddress = "N/A";
+        if ($latestAppAddress !== null) {
+            $currentAppAddress = $latestAppAddress->address;
+        }
+
+        return view("withdrawals.form", $params + compact("mode", "currentAppAddress"));
     }
 
     /**
@@ -74,21 +83,33 @@ class WithdrawalsController extends Controller
     {
         //Validate
         $request->validate([
-            'address' => "required|min:40|max:45",
-            'email'   => "required|exists,users.email",
-            'mosaic_fqmn' => "required|exists,nem_known_mosaics.fqmn",
-            'awaited_amount' => "required",
+            'sender' => "required|min:40|max:45|exists:nem_watch_addresses,address",
+            'recipient' => "required|min:40|max:45",
+            'email'   => "required|exists:users,email",
+            'mosaic_fqmn' => "required|exists:nem_known_mosaics,fqmn",
+            'amount' => "required",
         ]);
 
         $user    = User::where("email", $request->email)->first();
-        $address = WatchAddress::where("address", $request->address)->first();
+        $address = WatchAddress::where("address", $request->sender)->first();
         $mosaic  = KnownMosaic::where("fqmn", $request->mosaic_fqmn)->first();
+        $lastn   = UserWithdrawal::where("user_id", $user->id)
+                              ->orderBy("nonce", "desc")
+                              ->select("nonce")->first();
 
-        $deposit = UserWithdrawal::create([
+        $nonce = 1;
+        if ($lastn !== null) {
+            $nonce = ((int) $lastn->nonce) + 1;
+        }
+
+        $withdrawal = UserWithdrawal::create([
             'address_id' => $address->id,
             'user_id'    => $user->id,
+            'recipient_address' => $request->recipient,
             'mosaic_fqmn' => $mosaic->fqmn,
-            'awaited_amount' => (int) $request->awaited_amount,
+            'amount' => (int) $request->amount,
+            'nonce' => $nonce,
+            'reference' => $request->reference ?: null,
         ]);
         return redirect('/withdrawals');
     }
@@ -96,22 +117,23 @@ class WithdrawalsController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\UserWithdrawal  $deposit
+     * @param  \App\UserWithdrawal  $withdrawal
      * @return \Illuminate\Http\Response
      */
-    public function show(UserWithdrawal $deposit)
+    public function show(UserWithdrawal $withdrawal)
     {
-        return view('withdrawals.show', compact('deposit'));
+        return view('withdrawals.show', compact('withdrawal'));
     }
  
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\UserWithdrawal  $deposit
+     * @param  \App\UserWithdrawal  $withdrawal
      * @return \Illuminate\Http\Response
      */
-    public function edit(UserWithdrawal $deposit)
+    public function edit(UserWithdrawal $withdrawal)
     {
+        // no update
         return redirect("withdrawals");
     }
  
@@ -119,22 +141,24 @@ class WithdrawalsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\UserWithdrawal  $deposit
+     * @param  \App\UserWithdrawal  $withdrawal
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, UserWithdrawal $deposit)
+    public function update(Request $request, UserWithdrawal $withdrawal)
     {
+        // no update
         return redirect("withdrawals");
     }
  
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\UserWithdrawal  $deposit
+     * @param  \App\UserWithdrawal  $withdrawal
      * @return \Illuminate\Http\Response
      */
-    public function destroy(UserWithdrawal $deposit)
+    public function destroy(UserWithdrawal $withdrawal)
     {
+        // no delete
         return redirect("withdrawals");
     }
 }

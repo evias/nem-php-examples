@@ -29,9 +29,10 @@ class UserWithdrawal
      * @var array
      */
     protected $fillable = [
+        'address_id',
         'user_id',
         'nonce',
-        'address',
+        'recipient_address',
         'reference',
         'mosaic_fqmn',
         'amount',
@@ -58,12 +59,22 @@ class UserWithdrawal
     ];
 
     /**
+     * Retrieve the associated `watch_addresses` entry
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\Relation
+     */
+    public function sender()
+    {
+        return $this->belongsTo('App\WatchAddress', 'address_id');
+    }
+
+    /**
      * Retrieve the associated `users` entry
      *
      * @return \Illuminate\Database\Eloquent\Relations\Relation
      */
     public function user()
     {
-        return $this->belongsTo('App\User', 'id', 'user_id');
+        return $this->belongsTo('App\User');
     }
 }

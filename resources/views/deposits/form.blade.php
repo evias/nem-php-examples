@@ -19,7 +19,7 @@
 
      {{ csrf_field() }}
      <div class="form-group">
-        <label for="emailAddress">Email Address</label>
+        <label for="emailAddress">User Email Address</label>
         <input type="text" class="form-control" id="emailAddress"  name="email" value="{{ isset($deposit) ? $deposit->user->email : Request::old('email') }}">
       </div>
       <div class="form-group">
@@ -31,7 +31,7 @@
         <input type="text" class="form-control" id="mosaic_fqmn" name="mosaic_fqmn" value="{{ isset($deposit) ? $deposit->mosaic_fqmn : Request::old('mosaic_fqmn') }}">
       </div>
       <div class="form-group">
-        <label for="address">NEM Address</label>
+      <label for="sender">Recipient Address (Current app address: {{$currentAppAddress}})</label>
         <input type="text" class="form-control" id="address" name="address" value="{{ isset($deposit) ? $deposit->address->address : Request::old('address') }}">
       </div>
       <div class="form-group">

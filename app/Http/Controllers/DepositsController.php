@@ -43,7 +43,13 @@ class DepositsController extends Controller
      */
     public function showForm($mode, $params = [])
     {
-        return view("deposits.form", $params + compact("mode"));
+        $latestAppAddress = WatchAddress::whereRaw("true")->orderBy("id", "desc")->first();
+        $currentAppAddress = "N/A";
+        if ($latestAppAddress !== null) {
+            $currentAppAddress = $latestAppAddress->address;
+        }
+
+        return view("deposits.form", $params + compact("mode", "currentAppAddress"));
     }
 
     /**
@@ -77,7 +83,7 @@ class DepositsController extends Controller
     {
         //Validate
         $request->validate([
-            'address' => "required|min:40|max:45",
+            'address' => "required|min:40|max:45|exists:nem_watch_addresses,address",
             'email'   => "required|exists:users,email",
             'mosaic_fqmn' => "required|exists:nem_known_mosaics,fqmn",
             'awaited_amount' => "required",
@@ -87,24 +93,21 @@ class DepositsController extends Controller
         $user    = User::where("email", $request->email)->first();
         $address = WatchAddress::where("address", $request->address)->first();
         $mosaic  = KnownMosaic::where("fqmn", $request->mosaic_fqmn)->first();
-        $nonce   = UserDeposit::where("user_id", $user->id)
+        $lastn   = UserDeposit::where("user_id", $user->id)
                               ->orderBy("nonce", "desc")
                               ->select("nonce")->first();
-
-        if (null === $nonce) {
-            $nonce = 1;
-        }
-        else {
-            $nonce = ((int) $nonce) + 1;
+                              
+        $nonce = 1;
+        if ($lastn !== null) {
+            $nonce = ((int) $lastn->nonce) + 1;
         }
 
-        //dd("store: " . $nonce);
         $deposit = UserDeposit::create([
             'address_id' => $address->id,
             'user_id'    => $user->id,
             'mosaic_fqmn' => $mosaic->fqmn,
             'awaited_amount' => (int) $request->awaited_amount,
-            'nonce' => $nonce + 1,
+            'nonce' => $nonce,
             'reference' => $request->reference,
         ]);
         return redirect('/deposits');
@@ -129,6 +132,7 @@ class DepositsController extends Controller
      */
     public function edit(UserDeposit $deposit)
     {
+        // no update
         return redirect("deposits");
     }
  
@@ -141,6 +145,7 @@ class DepositsController extends Controller
      */
     public function update(Request $request, UserDeposit $deposit)
     {
+        // no update
         return redirect("deposits");
     }
  
@@ -152,6 +157,7 @@ class DepositsController extends Controller
      */
     public function destroy(UserDeposit $deposit)
     {
+        // no delete
         return redirect("deposits");
     }
 }

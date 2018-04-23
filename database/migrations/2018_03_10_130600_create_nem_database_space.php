@@ -104,22 +104,22 @@ class CreateNemDatabaseSpace extends Migration
             $table->increments('id');
 
             // meta
+            $table->integer("address_id")->unsigned();
             $table->integer("user_id")->unsigned();
             $table->integer('nonce')->unsigned();
-            $table->string("address", 40);
+            $table->string("recipient_address", 40);
             $table->string("reference", 32)->nullable(); // for withdrawals message is optional
 
             // data
             $table->string('mosaic_fqmn');
             $table->bigInteger("amount")->unsigned();
-
-            // string
-            $table->string("tx_hash");
-            $table->integer("broadcast_height")->unsigned();
-
+            $table->string("tx_hash")->nullable();
+            $table->integer("broadcast_height")->unsigned()->nullable();
             $table->timestamps();
 
             $table->engine = "InnoDB";
+            $table->unique(["user_id", "nonce"]);
+            $table->foreign("address_id")->references("id")->on("nem_watch_addresses");
             $table->foreign("user_id")->references("id")->on("users");
             $table->foreign("mosaic_fqmn")->references("fqmn")->on("nem_known_mosaics");
         });
