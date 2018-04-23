@@ -29,7 +29,7 @@
             <div class="content">
                 <div class="title m-b-md">
                     <div class="col-md-4">
-                        <img src="https://nem.io/wp-content/themes/nem/img/logo-nem.svg" width="175">
+                        <img src="{{asset('images/dimcoin.png')}}" width="100">
                     </div>
                     <div class="col-md-8">apps</div>
                 </div>

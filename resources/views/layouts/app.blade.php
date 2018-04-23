@@ -28,11 +28,12 @@
                     </button>
 
                     <!-- Branding Image -->
-                    <a class="navbar-brand" href="{{ url('/') }}">
-                        <div class="col-md-4">
-                            <img src="https://nem.io/wp-content/themes/nem/img/logo-nem.svg" width="100">
-                        </div>
-                        <div class="col-md-offset-2 col-md-4">apps</div>
+                    <a class="navbar-brand" href="{{ url('/') }}"
+                       style="
+                           background: url({{asset('images/dimcoin.png')}}) no-repeat left center;
+                           background-size: 50px;
+                       ">
+                        <div class="col-md-offset-2 col-md-6">apps</div>
                     </a>
                 </div>
 
