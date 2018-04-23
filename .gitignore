@@ -14,3 +14,4 @@ yarn-error.log
 
 # Remove the next line when package is stable
 composer.lock
+package-lock.json

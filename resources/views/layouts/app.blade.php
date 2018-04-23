@@ -48,7 +48,11 @@
                         @guest
                             <li><a href="{{ route('login') }}">Login</a></li>
                         @else
+                            <li><a href="/users" role="button"><i class="fa fa-users"></i>&nbsp;Users</a></li>
+                            <li><a href="/deposits" role="button"><i class="fa fa-bitcoin"></i>&nbsp;Deposits</a></li>
+                            <li><a href="/withdrawals" role="button"><i class="fa fa-dollar"></i>&nbsp;Withdrawals</a></li>
                             <li class="dropdown">
+
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true">
                                     {{ Auth::user()->name }} <span class="caret"></span>
                                 </a>
@@ -73,7 +77,18 @@
             </div>
         </nav>
 
-        @yield('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">@yield('moduleTitle')</div>
+                        <div class="panel-body">
+                            @yield('content')
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

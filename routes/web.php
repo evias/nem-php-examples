@@ -15,18 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('getting-started', function () {
-    return view('welcome');
-});
-
-Route::get('nem-sandbox', function () {
-    return view('welcome');
-});
-
-Route::get('login', '\App\Http\Controllers\Auth\LoginController@showLoginForm')->name("login");
-Route::post('login', '\App\Http\Controllers\Auth\LoginController@login');
-Route::get('logout', '\App\Http\Controllers\Auth\LoginController@logout');
-
+// Authentication
 Auth::routes();
-
 Route::get('/home', 'HomeController@index')->name('home');
+Route::resource("users", "UsersController");
