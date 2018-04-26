@@ -26,8 +26,12 @@ use NEM\SDK;
 use NEM\Infrastructure\Account as AccountService;
 use NEM\Infrastructure\Network as NetworkService;
 use App\Blockchain\ConnectionPool;
-use Invoice;
+use App\UserDeposit;
+use App\UserDepositTx;
+use App\WatchAddress;
+use App\KnownMosaic;
 
+use DB;
 use Exception;
 use RuntimeException;
 use InvalidArgumentException;
@@ -41,35 +45,14 @@ class ProcessorDeposits
      * @var string
      */
     protected $signature = 'processor:deposits
-                       {--N|network=mainnet : Define a NEM Network name (or ID). Defaults to Mainnet.}
-                       {--A|address= : Define a NEM Address for which you wish to observe Payments.}
-                       {--p|prefix= : (Optional) Define a Payment Processing message Prefix.}
-                       {--c|currency= : (Optional) Define a custom NEM Fully Qualified Mosaic Name (Ex. : `nem:xem`, `dim:coin`, etc.).}';
+                       {--N|network=mainnet : Define a NEM Network name (or ID). Defaults to Mainnet.}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'This will go through all received deposits. You can define a custom message if needed.';
-
-    /**
-     * List of multiple addresse to listen for Payments.
-     * 
-     * @var array
-     */
-    protected $listenAddressList = [];
-
-    /**
-     * List of multiple addresse to listen for Payments.
-     * 
-     * @var array
-     */
-    protected $currencies = [
-        "nem:xem",
-        "dim:coin",
-        "dim:token",
-    ];
+    protected $description = 'This will go through all received deposits.';
 
     /**
      * List of arguments passed to this command instance.
@@ -85,24 +68,13 @@ class ProcessorDeposits
      */
     public function setUp()
     {
-        $our_opts = ["prefix" => null, "network" => null, "address" => null, "currency" => null];
+        $our_opts = ["network" => null,];
 
         // parse command line arguments.
         $options  = array_intersect_key($this->option(), $our_opts);
 
         if (!in_array(strtolower($options["network"]), ["mainnet", "testnet", "mijin"])) {
             $options["network"] = "mainnet";
-        }
-
-        if (!empty($options["address"])) {
-            // determine network by address (address prevails)
-            $options["network"] = Network::fromAddress($options["address"]);
-            array_push($this->listenAddressList, $options["address"]);
-        }
-
-        if (!empty($options["currency"])) {
-            $currencies = explode(",", $options["currency"]);
-            $this->currencies = array_merge($this->currencies, $currency);
         }
 
         // store arguments
@@ -119,11 +91,16 @@ class ProcessorDeposits
     {
         $this->setUp();
 
-        while (!empty($this->listenAddressList)) {
+        $deposits = UserDeposit::where("is_paid", false)
+                               ->whereNull("paid_height")
+                               ->get();
 
-            $currentAddress = array_shift($this->listenAddressList);
-            $this->readTransactionsForAddress($currentAddress);
-        }
+        foreach ($deposits as $deposit) :
+
+            $this->info("Now processing open user deposit: " . $deposit->reference);
+            $this->processUserDeposit($deposit);
+
+        endforeach ;
     }
 
     /**
@@ -132,13 +109,14 @@ class ProcessorDeposits
      * 
      * This will read *all* transactions available on the said NEM Wallet.
      * 
-     * @param   string  $address
+     * @param   \App\WatchAddress  $address
      * @return  
      */
-    public function readTransactionsForAddress($address)
+    public function processUserDeposit(UserDeposit $deposit)
     {
         // shortcuts
         $network = $this->arguments["network"];
+        $address = $deposit->address;
         $pool = new ConnectionPool($network);
         $api = $pool->getEndpoint();
 
@@ -150,13 +128,13 @@ class ProcessorDeposits
 
         do {
             try {
-                $uri   = "account/transfers/incoming?" . http_build_query(["address" => $multisigAddr]);
+                $uri   = "account/transfers/incoming?" . http_build_query(["address" => $address->address]);
                 $json  = $api->getJSON($uri);
                 $trxes = json_decode($json, true);
                 $trxes = $trxes["data"];
 
                 $cntTrxes = count($trxes);
-                $result   = $this->processTransactions($trxes);
+                $result   = $this->processTransactions($deposit, $trxes);
             }
             catch(RequestException $e) {
                 //XXX E_NETUNREACH, E_NOTCONNECTED, E_CONNREFUSED
@@ -178,7 +156,7 @@ class ProcessorDeposits
      * @param   array       $transactions
      * @return  boolean     Whether to continue (true) fetching transactions or to stop (false).
      */
-    public function processTransactions(array $transactions)
+    public function processTransactions(UserDeposit $deposit, array $transactions)
     {
         for ($i = 0, $c = count($transactions); $i < $c; $i++) {
             $txHash = $transactions[$i]["meta"]["hash"]["data"];
@@ -186,6 +164,7 @@ class ProcessorDeposits
             // read transaction content
             $txMeta = $transactions[$i]["meta"];
             $txData = $transactions[$i]["transaction"];
+            $txBlk  = $txMeta["height"];
 
             // handle multisig
             $realData = $txData["type"] === 4100 ? $txData["otherTrans"] : $txData;
@@ -202,26 +181,43 @@ class ProcessorDeposits
 
             $transfer = new Transfer($realData);
             $message  = $transfer->message()->toPlain();
-            $exists = Invoice::where("tx_hash", $txHash)->first();
+            $exists = UserDepositTx::where("hash", $txHash)->first();
 
-            if ($exists !== null) // transaction was read before
+            if ($exists !== null) {
+                // transaction was read before
                 return false;
-
-            // multi payments possible
-            $byInvoice = Invoice::where("number", $message)->first();
-            $xemAmount = $this->extractAmount($realData, "nem:xem");
-
-            if ($byInvoice === null) {
-                // save invoice
-                $invoice = new Invoice([
-                    "tx_hash" => $txHash,
-                    "number"  => $message,
-                ]);
             }
-            else {
-                $invoice = $byInvoice;
-                $invoice->amount_paid = $invoice->amount_paid + $xemAmount;
+            elseif ($message != $deposit->reference) {
+                // incorrect message for current deposit
+                return true;
             }
+
+            // extract the amount
+            $payAmount = $this->extractAmount($realData, $deposit->mosaic);
+
+            // invalid incoming transaction for said `deposit`
+            if (false === $payAmount) {
+                $payAmount = 0;
+            }
+
+            $deposit->paid_amount = $deposit->paid_amount + $payAmount;
+
+            if ($deposit->paid_amount >= $deposit->awaited_amount) {
+                $deposit->is_paid = true;
+                $deposit->paid_height = $txBlk;
+
+                //XXX event "paid"
+            }
+
+            $deposit->save();
+
+            $tx = UserDepositTx::create([
+                "deposit_id" => $deposit->id,
+                "hash" => $txHash,
+                "height" => $txBlk,
+                "amount" => $payAmount,
+                "mosaics_json" => json_encode($realData["mosaics"]),
+            ]);
         }
 
         return true;
@@ -235,16 +231,32 @@ class ProcessorDeposits
      * @param   string  $mosaic
      * @return  integer
      */
-    public function extractAmount(array $transaction, $mosaic)
+    public function extractAmount(array $transaction, KnownMosaic $mosaic)
     {
-        if (empty($transaction["mosaics"])) {
+        if (empty($transaction["mosaics"]) && $mosaic->fqmn === "nem:xem") {
             // only XEM available.
             return $transaction["amount"];
         }
+        elseif (empty($transaction["mosaics"])) {
+            return false;
+        }
 
         $mosaicAmount = 0;
-        for ($i = 0, $n = count($transaction["mosaics"]); $i < $n; $i++) {
-            
+        $attachments  = $transaction["mosaics"];
+        for ($i = 0, $n = count($attachments); $i < $n; $i++) {
+            $attachment = $attachments[$i];
+            $attachId = $attachment["mosaicId"];
+            if ($mosaic->namespace !== $attachId["namespaceId"]) {
+                continue;
+            }
+
+            if ($mosaic->mosaic_name !== $attachId["name"]) {
+                continue;
+            }
+
+            $mosaicAmount += (int) $attachment["quantity"];
         }
+
+        return $mosaicAmount;
     }
 }

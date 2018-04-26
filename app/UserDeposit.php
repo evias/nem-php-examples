@@ -83,4 +83,14 @@ class UserDeposit
     {
         return $this->belongsTo('App\User');
     }
+
+    /**
+     * Retrieve the associated `known_mosaics` entry
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\Relation
+     */
+    public function mosaic()
+    {
+        return $this->hasOne('App\KnownMosaic', 'fqmn', 'mosaic_fqmn');
+    }
 }
