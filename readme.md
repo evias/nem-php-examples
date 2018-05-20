@@ -66,6 +66,35 @@ $ php artisan serve --host=127.0.0.1 --port=8888
 
 And now simply open your browser to the following URL: `http://127.0.0.1:8888`.
 
+You can also use Apache Virtual Hosts to host this application *on your own server*. Following is an example Virtual Host that can be used to serve the `nem-php-examples` web application on your Apache2 Server:
+
+```bash
+<VirtualHost *:80>
+    ServerName connect.dimcoin.io
+    DocumentRoot /var/www/vhosts/dim-connect/public
+
+    # Force HTTPS when loading the page
+    #RewriteEngine On
+    #RewriteCond %{HTTPS} off
+    #RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
+
+    <Directory /var/www/vhosts/dim-connect/public>
+            Options -Indexes +FollowSymLinks -MultiViews
+            AllowOverride All
+            Order allow,deny
+            allow from all
+            Require all granted
+    </Directory>
+
+    CustomLog /var/log/apache2/dim-connect-access.log forwarded
+    ErrorLog /var/log/apache2/dim-connect-error.log
+
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+</VirtualHost>
+```
+
 ## (Optional) Install build tools (for Development purpose only)
 
 You will need to install `nodejs` such that you can install the frontend template dependencies such as Bootstrap, jQuery and VueJS.
