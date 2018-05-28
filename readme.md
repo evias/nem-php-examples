@@ -15,6 +15,8 @@ It should provide with features that are easy to reproduce and showcase how the 
 
 The laravel application *is only a wrapper* to provide with a web application that can be served on any of Apache or Nginx. Please use composer as mentioned in the following section.
 
+This package is currently unmaintained as I am planning an upgrade to integrate lately released Catapult features.
+
 # Usage
 
 ## Step 1: (Required) Installation
